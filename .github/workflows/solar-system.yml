@@ -36,12 +36,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4  # Fixed typo
+        uses: actions/checkout@v4
 
       - name: DockerHub login
         uses: docker/login-action@v2.2.0
         with:
-          username: ${{ vars.DOCKER_USERNAME }}  # Ensure secret is set in GitHub
+          username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Docker build for Testing
@@ -53,16 +53,20 @@ jobs:
 
       - name: Docker image test
         run: |
+          echo "Listing Docker images..."
           docker images
+          
+          echo "Starting Docker container..."
           docker run --name solar-system-app -d  \
               -p 3000:3000 \
               -e MONGO_URI=$MONGO_URI \
               -e MONGO_USERNAME=$MONGO_USERNAME \
               -e MONGO_PASSWORD=$MONGO_PASSWORD \
               ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
-          
-          export IP =$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
-          echo $IP
 
-          echo Testing Image URL using wget
-          wget -q -o - 127.0.0.1:3000/live | grep live
+          echo "Checking running containers..."
+          docker ps -a
+
+          echo "Testing Image URL using curl..."
+          sleep 5  # Allow some time for the container to start
+          curl -s http://localhost:3000/live | grep live
