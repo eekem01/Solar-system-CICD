@@ -79,19 +79,21 @@ jobs:
 
             - name: Convert Repository Owner to Lowercase
             
-      - name: Convert Repository Owner to Lowercas
-        run: echo "REPO_OWNER_LC=$(echo $GITHUB_REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-        env:
-          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-
+      - name: Convert Repository Owner to Lowercase
+        run: |
+          echo "Converting repository owner to lowercase..."
+          REPO_OWNER_LC=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
+          echo "REPO_OWNER_LC=$REPO_OWNER_LC" >> "$GITHUB_ENV"
+          echo "Converted Owner: $REPO_OWNER_LC"
+    
       - name: Container registry push
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: |
-            ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
-            ghcr.io/${{ env.REPO_OWNER_LC }}/solar-system:${{ github.sha }}
+              ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+              ghcr.io/${{ env.REPO_OWNER_LC }}/solar-system:${{ github.sha }}
 
 
 
