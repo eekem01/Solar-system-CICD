@@ -1,26 +1,68 @@
 name: solar-system workflows
 
 on:
-    workflow_dispatch:
-    push:
-        branches:
-            - '*feature/*'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "*feature/*"
+
+env:
+  MONGO_URI: "mongodb+srv://supercluster.d83jj.mongodb.net/superData"
+  MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
+  MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 
 jobs:
-    unit-testing:
-        name: Unit Testing
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
+  unit-testing:
+    name: Unit Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-            - name: Setup NodeJs version - 18
-              uses: actions/setup-node@v3
-              with:
-                node-version: 18
+      - name: Setup NodeJs version - 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-            - name: Install Dependencies
-              run: npm install
+      - name: Install Dependencies
+        run: npm install
 
-            - name: Unit Testing
-              run: npm test
+      - name: Unit Testing
+        run: npm test
+
+  docker:
+    name: Containerization
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4  # Fixed typo
+
+      - name: DockerHub login
+        uses: docker/login-action@v2.2.0
+        with:
+          username: ${{ vars.DOCKER_USERNAME }}  # Ensure secret is set in GitHub
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker build for Testing
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+
+      - name: Docker image test
+        run: |
+          docker images
+          docker run --name solar-system-app -d  \
+              -p 3000:3000 \
+              -e MONGO_URI=$MONGO_URI \
+              -e MONGO_USERNAME=$MONGO_USERNAME \
+              -e MONGO_PASSWORD=$MONGO_PASSWORD \
+              ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+          
+          export IP =$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
+          echo $IP
+
+          echo Testing Image URL using wget
+          wget -q -o - 127.0.0.1:3000/live | grep live
