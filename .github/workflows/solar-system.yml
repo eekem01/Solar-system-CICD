@@ -76,10 +76,7 @@ jobs:
 
           echo Testing image URL using wget
           wget -q -O - 127.0.0.1:3000/live | grep live
-
-      - name: Set repo owner to lowercase
-        run: echo "REPO_OWNER_LC=$(echo $GITHUB_ACTOR | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
+          
       - name: Container Registy Push
         uses: docker/build-push-action@v4
         with:
