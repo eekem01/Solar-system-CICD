@@ -77,6 +77,12 @@ jobs:
           echo Testing image URL using wget
           wget -q -O - 127.0.0.1:3000/live | grep live
 
+      - name: set lower case owner name
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+          env:
+            OWNER: '${{ github.repository_owner }}'
+
       - name: Container registy push
         uses: docker/build-push-action@v4
         with:
