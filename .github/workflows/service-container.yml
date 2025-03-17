@@ -1,4 +1,4 @@
-name: solar-system workflows
+name: service connection testing
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
             ports:
                 - 27017:27017
     env:
-      MONGO_URI: "mongodb//localhost:27017/superData"
+      MONGO_URI: "mongodb://localhost:27017/superData"
       MONGO_USERNAME: non-prod-user  # hadcode this in your env
       MONGO_PASSWORD: non-prod-password # hadcode this in your env
     runs-on: ubuntu-latest
