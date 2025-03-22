@@ -1,4 +1,4 @@
-name: deployment workflow jobs in kubernetes
+name: Deployment Workflow Jobs in Kubernetes
 
 on:
   workflow_dispatch:
@@ -60,11 +60,18 @@ jobs:
           push: false
           tags: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
 
+      - name: Debug Environment Variables
+        run: |
+          echo "MONGO_URI: $MONGO_URI"
+          echo "MONGO_USERNAME: $MONGO_USERNAME"
+          echo "MONGO_PASSWORD: $MONGO_PASSWORD"
+
+      - name: Test MongoDB Connection
+        run: |
+          mongosh "$MONGO_URI" --username "$MONGO_USERNAME" --password "$MONGO_PASSWORD" --eval "db.runCommand({ping: 1})"
+
       - name: Docker image test
         run: |
-          echo "Listing Docker images..."
-          docker images
-          
           echo "Starting Docker container..."
           docker run --name solar-system-app -d  \
               -p 3000:3000 \
@@ -79,7 +86,11 @@ jobs:
           echo Testing image URL using wget
           wget -q -O - 127.0.0.1:3000/live | grep live
 
-      - name: Container Registy Push
+      - name: Debug Docker container
+        run: |
+          docker exec solar-system-app env
+
+      - name: Container Registry Push
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -105,7 +116,3 @@ jobs:
           kubectl version --output=yaml
           echo ----------------------------------------------------
           kubectl get nodes
-
-
-
-
