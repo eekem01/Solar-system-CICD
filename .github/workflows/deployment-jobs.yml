@@ -1,11 +1,14 @@
 name: Deployment Workflow Jobs in Kubernetes
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
       - "*feature/*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   MONGO_URI: "mongodb+srv://supercluster.d83jj.mongodb.net/superData"
@@ -59,6 +62,16 @@ jobs:
           context: .
           push: false
           tags: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+
+      - name: Install mongosh
+        run: |
+          # Install mongosh
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
+          echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+          sudo apt-get update
+          sudo apt-get install -y mongodb-mongosh
 
       - name: Debug Environment Variables
         run: |
